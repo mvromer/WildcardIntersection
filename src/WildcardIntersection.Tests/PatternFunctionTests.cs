@@ -56,6 +56,7 @@ public class PatternFunctionTests
     [InlineData("a**a", "aaaa")]
     [InlineData("a*aa", "a**a")]
     [InlineData("a*", "a**")]
+    [InlineData("a**a", "a*")]
     public void AssertPatternException(string x, string y)
     {
         Invoking(() => IntersectPatterns(x, y)).Should().Throw<ArgumentException>();

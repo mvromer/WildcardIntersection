@@ -174,13 +174,33 @@ public static class PatternFunctions
                 // contain any wildcards. At this point, we need to find the intersection of *Q and
                 // R*, which involves performing a "wildcard compression" on Q and R.
                 //
-                // RECALL: we need to include the wildcard in the span passed for R.
-                return IntersectWildcardSegments(
-                    prefix: x[..iWild],
-                    suffix: y[(iY + 1)..],
-                    q: x[(iWild + 1)..(iX + 1)],
-                    rStar: y[iWild..(iY + 1)]
-                );
+                // NOTE: we need to include the wildcard in the span passed for R.
+                var prefix = x[..iWild];
+                var suffix = y[(iY + 1)..];
+                var starQ = x[iWild..(iX + 1)];
+                var q = starQ[1..];
+                var rStar = y[iWild..(iY + 1)];
+
+                // We want to ensure Q and R don't have wildcards, and our pattern validator makes
+                // sure the given pattern doesn't contain multiple wildcards. Thus, we pass *Q and
+                // R* to the validator.
+                if (!IsValidPattern(starQ))
+                {
+                    throw new ArgumentException(
+                        $"Pattern {x} contains multiple wildcards",
+                        nameof(x)
+                    );
+                }
+
+                if (!IsValidPattern(rStar))
+                {
+                    throw new ArgumentException(
+                        $"Pattern {y} contains multiple wildcards",
+                        nameof(y)
+                    );
+                }
+
+                return IntersectWildcardFragments(prefix, suffix, q, rStar);
             }
 
             if (x[iX] != y[iY])
@@ -207,7 +227,7 @@ public static class PatternFunctions
     //
     // NOTE: rStar is expected to be the concatenation of [r, *]. This is so that we can optimally
     // join the following four spans using .NET's string.Concat when it's computed: [p, rStar, t, s]
-    private static string IntersectWildcardSegments(
+    private static string IntersectWildcardFragments(
         ReadOnlySpan<char> prefix,
         ReadOnlySpan<char> suffix,
         ReadOnlySpan<char> q,
