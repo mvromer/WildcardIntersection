@@ -1,4 +1,5 @@
 using FluentAssertions;
+using static FluentAssertions.FluentActions;
 using static WildcardIntersection.PatternFunctions;
 
 namespace WildcardIntersection.Tests;
@@ -7,6 +8,8 @@ public class PatternFunctionTests
 {
     [Theory]
     [InlineData("", "", "")]
+    //
+    [InlineData("a", "b", "")]
     //
     [InlineData("a", "a", "a")]
     //
@@ -30,6 +33,12 @@ public class PatternFunctionTests
     [InlineData("a*a", "aaaa", "aaaa")]
     [InlineData("aaaa", "a*a", "aaaa")]
     //
+    [InlineData("aa*aa", "aaa", "")]
+    [InlineData("aaa", "aa*aa", "")]
+    //
+    [InlineData("a*a", "a*b", "")]
+    [InlineData("a*b", "a*a", "")]
+    //
     [InlineData("a*cdea", "abcd*a", "abcd*ea")]
     [InlineData("abcd*a", "a*cdea", "abcd*ea")]
     //
@@ -41,5 +50,14 @@ public class PatternFunctionTests
     public void AssertPatternIntersection(string x, string y, string expected)
     {
         IntersectPatterns(x, y).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("a**a", "aaaa")]
+    [InlineData("a*aa", "a**a")]
+    [InlineData("a*", "a**")]
+    public void AssertPatternException(string x, string y)
+    {
+        Invoking(() => IntersectPatterns(x, y)).Should().Throw<ArgumentException>();
     }
 }
